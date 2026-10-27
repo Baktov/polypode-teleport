@@ -28,4 +28,13 @@ P.AddTranslations(ns.L, "esES", {
 	["Macro pour toutes les fenêtres : %s"] = "Macro para todas las ventanas: %s",
 	["Demande de %s"] = "Solicitud de %s",
 	["Les autres fenêtres de l'équipe reçoivent cette ligne, prête à cliquer."] = "Las demás ventanas del equipo reciben esta fila, lista para hacer clic.",
+	["Maison"] = "Casa",
+	["Donjons et raids : %s"] = "Mazmorras y bandas: %s",
+	["Foyer et maison"] = "Hogar y casa",
+	["Classe"] = "Clase",
+	["Race"] = "Raza",
+	["Objets"] = "Objetos",
+	["Ingénierie"] = "Ingeniería",
+	["Nombre de téléports prêts par personnage."] = "Número de teletransportes listos por personaje.",
+	["Clic : replier ou déplier la section."] = "Clic: contraer o expandir la sección.",
 })

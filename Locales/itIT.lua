@@ -28,4 +28,13 @@ P.AddTranslations(ns.L, "itIT", {
 	["Macro pour toutes les fenêtres : %s"] = "Macro per tutte le finestre: %s",
 	["Demande de %s"] = "Richiesta di %s",
 	["Les autres fenêtres de l'équipe reçoivent cette ligne, prête à cliquer."] = "Le altre finestre della squadra ricevono questa riga, pronta da cliccare.",
+	["Maison"] = "Casa",
+	["Donjons et raids : %s"] = "Spedizioni e incursioni: %s",
+	["Foyer et maison"] = "Focolare e casa",
+	["Classe"] = "Classe",
+	["Race"] = "Razza",
+	["Objets"] = "Oggetti",
+	["Ingénierie"] = "Ingegneria",
+	["Nombre de téléports prêts par personnage."] = "Numero di teletrasporti pronti per personaggio.",
+	["Clic : replier ou déplier la section."] = "Clic: comprimi o espandi la sezione.",
 })

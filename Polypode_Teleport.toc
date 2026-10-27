@@ -10,7 +10,7 @@
 ## Notes: Polypode companion addon: teleports of the team (hearthstones, class spells, toys), ready or on cooldown, and one click to use your own.
 ## Notes-frFR: Addon compagnon de Polypode : téléports de l'équipe (pierres de foyer, sorts de classe, jouets), prêts ou en recharge, et un clic pour utiliser le vôtre.
 ## Author: Baktov
-## Version: 1.1.1
+## Version: 1.2.0
 ## Dependencies: Polypode
 ## SavedVariables: PolypodeTeleportDB
 ## Category: Polypode

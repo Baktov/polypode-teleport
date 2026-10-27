@@ -50,6 +50,9 @@ local requested -- { from = clé, id = destination } : fenêtre ouverte sur la d
 local pendingRequest -- demande reçue en combat : { from, id, time }
 local lastSignature, sendSeq = nil, 0
 local updatePending, refreshPending, waitingCombatEnd
+local flyoutsPending -- menus de sorts à relire (SPELLS_CHANGED) : nouvelles destinations possibles
+local houses -- maisons du joueur (PLAYER_HOUSE_LIST_UPDATED), nil tant qu'inconnues
+local sectionRows = {} -- [section] = destinations affichées (BuildItems), pour les comptes des en-têtes
 local frame, listPanel
 
 -- LECTURE DU PERSONNAGE JOUÉ ------------------------------------------------------------------
@@ -94,10 +97,33 @@ local function HasToy(itemID)
 	return not (C_ToyBox and C_ToyBox.IsToyUsable and C_ToyBox.IsToyUsable(itemID) == false)
 end
 
--- Moyen possédé : type d'action du bouton sécurisé (spell, toy, item), valeur, recharge restante.
--- Objet ou jouet : beaucoup d'objets de téléport sont devenus des jouets (pierres de foyer de fief
--- et de Dalaran), et un jouet peut n'être qu'un objet dans les sacs (WoW Forever) : les deux sont
--- cherchés dans la collection de jouets puis dans les sacs.
+-- Maison du joueur : la seule, sinon celle de sa faction (la première est celle de l'Alliance).
+local function OwnHouse()
+	if not houses or #houses == 0 then
+		return nil
+	end
+	if #houses > 1 and UnitFactionGroup("player") == "Horde" then
+		return houses[2]
+	end
+	return houses[1]
+end
+
+-- Conditions d'un moyen possédé (faction, classe, race, fonction usable) : vrai si utilisable.
+local function SourceAllowed(source)
+	if source.faction and UnitFactionGroup("player") ~= source.faction then
+		return false
+	elseif source.class and select(2, UnitClass("player")) ~= source.class then
+		return false
+	elseif source.race and select(2, UnitRace("player")) ~= source.race then
+		return false
+	end
+	return not source.usable or source.usable() and true or false
+end
+
+-- Moyen possédé : type d'action du bouton sécurisé (spell, toy, item, teleporthome, returnhome),
+-- valeur, recharge restante. Objet ou jouet : beaucoup d'objets de téléport sont devenus des jouets
+-- (pierres de foyer de fief et de Dalaran), et un jouet peut n'être qu'un objet dans les sacs
+-- (WoW Forever) : les deux sont cherchés dans la collection de jouets puis dans les sacs.
 local function EvaluateSource(source)
 	if source.spell then
 		if SpellKnown(source.spell) then
@@ -105,11 +131,27 @@ local function EvaluateSource(source)
 		end
 		return
 	end
+	if source.housing then
+		local house = OwnHouse()
+		if not house then
+			return
+		end
+		-- En visite chez soi : « retour » au lieu de départ, sans recharge.
+		if C_HousingNeighborhood and C_HousingNeighborhood.CanReturnAfterVisitingHouse() then
+			return "returnhome", house, 0
+		end
+		local info = C_Housing.GetVisitCooldownInfo()
+		return "teleporthome", house, info and Remaining(info.startTime, info.duration) or 0
+	end
 	local itemID = source.toy or source.item
+	local kind
 	if HasToy(itemID) then
-		return "toy", itemID, ItemRemaining(itemID)
+		kind = "toy"
 	elseif ItemCount(itemID) > 0 then
-		return "item", itemID, ItemRemaining(itemID)
+		kind = "item"
+	end
+	if kind and SourceAllowed(source) then
+		return kind, itemID, ItemRemaining(itemID)
 	end
 end
 
@@ -146,13 +188,16 @@ end
 -- Un bouton par destination, créé hors combat, sans taille ni position (jamais visible) : cliqué
 -- par les lignes de la fenêtre, la touche de Bindings.xml ou /click PolypodeTeleport_<id>.
 -- useOnKeyDown faux : il agit au relâchement, ce que donnent aussi /click et le délégué « click ».
+-- Crée seulement les boutons manquants (destinations ajoutées par les menus de sorts).
 local function CreateSecureButtons()
 	for _, destination in ipairs(ns.DESTINATIONS) do
-		local button = CreateFrame("Button", "PolypodeTeleport_" .. destination.id, UIParent,
-			"SecureActionButtonTemplate")
-		button:RegisterForClicks("AnyUp", "AnyDown")
-		button:SetAttribute("useOnKeyDown", false)
-		secureButtons[destination.id] = button
+		if not secureButtons[destination.id] then
+			local button = CreateFrame("Button", "PolypodeTeleport_" .. destination.id, UIParent,
+				"SecureActionButtonTemplate")
+			button:RegisterForClicks("AnyUp", "AnyDown")
+			button:SetAttribute("useOnKeyDown", false)
+			secureButtons[destination.id] = button
+		end
 	end
 end
 
@@ -170,6 +215,10 @@ local function UpdateSecureButtons()
 			button:SetAttribute("spell", kind == "spell" and value or nil)
 			button:SetAttribute("toy", kind == "toy" and value or nil)
 			button:SetAttribute("item", kind == "item" and ("item:" .. value) or nil)
+			local house = kind == "teleporthome" and value or nil
+			button:SetAttribute("house-neighborhood-guid", house and house.neighborhoodGUID)
+			button:SetAttribute("house-guid", house and house.houseGUID)
+			button:SetAttribute("house-plot-id", house and house.plotID)
 			button.kind, button.value = kind, value
 		end
 	end
@@ -261,7 +310,8 @@ local function OnMessage(rest, sender)
 	for entry in (entries or ""):gmatch("[^;]+") do
 		local id, secondsText, source = strsplit(",", entry)
 		local seconds = tonumber(secondsText)
-		if ns.DESTINATION_BY_ID[id] and seconds then
+		-- Gardée même inconnue ici : la destination peut arriver plus tard (menus de sorts).
+		if id and id ~= "" and seconds then
 			peer.dest[id] = { source = tonumber(source), ready = seconds >= 0 and now + seconds or nil }
 		end
 	end
@@ -273,6 +323,12 @@ local function UpdateOwn()
 	if InCombatLockdown() then
 		waitingCombatEnd = true
 		return
+	end
+	if flyoutsPending then
+		flyoutsPending = nil
+		if ns.AddFlyoutDestinations() then
+			CreateSecureButtons()
+		end
 	end
 	ComputeOwn()
 	UpdateSecureButtons()
@@ -377,7 +433,7 @@ end
 
 -- Nom d'un moyen (nom du jeu) ; nil tant que les données de l'objet ne sont pas chargées.
 local function SourceName(source)
-	if not source then
+	if not source or source.housing then
 		return nil
 	end
 	if source.spell then
@@ -392,33 +448,90 @@ local function SourceName(source)
 end
 
 -- Libellé d'une destination : nom de son premier moyen, sans le préfixe « Téléportation : »...
+-- (nom complet pour les objets).
 local function DestinationLabel(destination)
 	if destination.hearth then
 		return L["Pierre de foyer"]
+	elseif destination.housing then
+		return L["Maison"]
 	end
 	if not labels[destination.id] then
 		local name = SourceName(destination.sources[1])
 		if not name then
 			return destination.id
 		end
-		labels[destination.id] = name:match("^[^:]+:%s*(.+)$") or name
+		labels[destination.id] = not destination.fullName and name:match("^[^:]+:%s*(.+)$") or name
 	end
 	return labels[destination.id]
 end
 
--- Lignes : lieu de lien, puis les destinations qu'au moins un personnage affiché possède ; sur
--- demande d'un membre, la seule destination demandée (et le lieu de lien pour la pierre de foyer).
+-- Nom d'une section ; celles des menus « Chemin du héros » prennent le nom du menu, sans son préfixe.
+local function SectionLabel(section)
+	if section.flyout then
+		local name = GetFlyoutInfo(section.flyout)
+		return L["Donjons et raids : %s"]:format(name and (name:match("^[^:]+:%s*(.+)$") or name) or section.id)
+	elseif section.id == "hearth" then
+		return L["Foyer et maison"]
+	elseif section.id == "class" then
+		return L["Classe"]
+	elseif section.id == "race" then
+		return L["Race"]
+	elseif section.id == "item" then
+		return L["Objets"]
+	elseif section.id == "engineering" then
+		return L["Ingénierie"]
+	end
+	return section.id
+end
+
+-- Sections repliées, gardées dans PolypodeTeleportDB.collapsed (sinon le choix par défaut de la section).
+local function CollapsedSettings()
+	PolypodeTeleportDB = PolypodeTeleportDB or {}
+	PolypodeTeleportDB.collapsed = PolypodeTeleportDB.collapsed or {}
+	return PolypodeTeleportDB.collapsed
+end
+
+local function IsCollapsed(section)
+	local saved = CollapsedSettings()[section.id]
+	if saved == nil then
+		return section.collapsed == true
+	end
+	return saved
+end
+
+local function IsReady(state)
+	return state ~= nil and state.ready ~= nil and state.ready <= GetServerTime()
+end
+
+-- Lignes : lieu de lien, puis par section (en-tête repliable) les destinations qu'au moins un
+-- personnage affiché possède ; sur demande d'un membre, la seule destination demandée (et le lieu
+-- de lien pour la pierre de foyer).
 local function BuildItems()
 	if requested then
 		local hearth = ns.DESTINATION_BY_ID[requested.id].hearth
 		return hearth and { { bind = true }, { id = requested.id } } or { { id = requested.id } }
 	end
-	local items = { { bind = true } }
+	sectionRows = {}
 	for _, destination in ipairs(ns.DESTINATIONS) do
 		for _, key in ipairs(columns) do
 			if StateOf(key, destination.id) then
-				items[#items + 1] = { id = destination.id }
+				local rows = sectionRows[destination.section] or {}
+				rows[#rows + 1] = destination.id
+				sectionRows[destination.section] = rows
 				break
+			end
+		end
+	end
+	local items = { { bind = true } }
+	for _, section in ipairs(ns.SECTIONS) do
+		local rows = sectionRows[section.id]
+		if rows then
+			local collapsed = IsCollapsed(section)
+			items[#items + 1] = { section = section.id, collapsed = collapsed }
+			if not collapsed then
+				for _, id in ipairs(rows) do
+					items[#items + 1] = { id = id }
+				end
 			end
 		end
 	end
@@ -428,13 +541,32 @@ end
 local function FormatItem(item)
 	if item.bind then
 		return YELLOW .. L["Lié à"] .. "|r"
+	elseif item.section then
+		local section = ns.SECTION_BY_ID[item.section]
+		return string.format("%s%s %s|r %s(%d)|r", YELLOW, item.collapsed and "+" or "-", SectionLabel(section),
+			GRAY, #(sectionRows[item.section] or {}))
 	end
-	local state = own.dest[item.id]
-	local label = DestinationLabel(ns.DESTINATION_BY_ID[item.id])
-	if state and state.ready and state.ready <= GetServerTime() then
+	local label = "   " .. DestinationLabel(ns.DESTINATION_BY_ID[item.id])
+	if IsReady(own.dest[item.id]) then
 		return label
 	end
 	return GRAY .. label .. "|r" -- pas utilisable par le personnage joué pour l'instant
+end
+
+-- Case d'un en-tête de section : nombre de destinations de la section prêtes pour ce personnage.
+local function SectionCellText(key, sectionID)
+	local ready, known = 0, false
+	for _, id in ipairs(sectionRows[sectionID] or {}) do
+		local state, received = StateOf(key, id)
+		known = known or received
+		if IsReady(state) then
+			ready = ready + 1
+		end
+	end
+	if not known then
+		return GRAY .. "?|r"
+	end
+	return (ready > 0 and GREEN or GRAY) .. ready .. "|r"
 end
 
 local function ShowRowTooltip(row)
@@ -450,9 +582,18 @@ local function ShowRowTooltip(row)
 			GameTooltip:AddDoubleLine(P.GetDisplayName(key), bind and bind ~= "" and bind or "?", 1, 1, 1, 1, 1, 1)
 		end
 		GameTooltip:AddLine(L["En orange : lié ailleurs que le premier personnage de l'équipe."], 0.6, 0.6, 0.6, true)
+	elseif data.section then
+		GameTooltip:AddLine(SectionLabel(ns.SECTION_BY_ID[data.section]))
+		GameTooltip:AddLine(L["Nombre de téléports prêts par personnage."], 1, 1, 1, true)
+		GameTooltip:AddLine(L["Clic : replier ou déplier la section."], 0.6, 0.6, 0.6, true)
 	else
 		local destination = ns.DESTINATION_BY_ID[data.id]
 		GameTooltip:AddLine(DestinationLabel(destination))
+		local description = destination.describe and C_Spell.GetSpellDescription
+			and C_Spell.GetSpellDescription(destination.sources[1].spell)
+		if description and description ~= "" then
+			GameTooltip:AddLine(description, 0.6, 0.6, 0.6, true)
+		end
 		for _, key in ipairs(columns) do
 			local state, known = StateOf(key, data.id)
 			local right = CellText(state, known)
@@ -500,6 +641,8 @@ local function DecorateRow(row, data)
 			else
 				cell:SetText(bind)
 			end
+		elseif data.section then
+			cell:SetText(SectionCellText(key, data.section))
 		else
 			cell:SetText(CellText(StateOf(key, data.id)))
 		end
@@ -524,19 +667,23 @@ local function DecorateRow(row, data)
 			ShowRowTooltip(row)
 		end)
 		cast:SetScript("OnLeave", GameTooltip_Hide)
-		-- Après l'action sécurisée : demande aux autres fenêtres, ou fermeture de la fenêtre ouverte
-		-- sur demande quand le téléport était prêt.
+		-- Après l'action sécurisée : en-tête de section replié ou déplié ; demande aux autres
+		-- fenêtres, ou fermeture de la fenêtre ouverte sur demande quand le téléport était prêt.
 		cast:HookScript("OnClick", function()
 			local clicked = row.data
 			if not clicked or clicked.bind then
+				return
+			end
+			if clicked.section then
+				CollapsedSettings()[clicked.section] = not clicked.collapsed
+				P.RefreshTeleport()
 				return
 			end
 			if not requested then
 				SendRequest(clicked.id)
 				return
 			end
-			local state = own.dest[clicked.id]
-			if state and state.ready and state.ready <= GetServerTime() then
+			if IsReady(own.dest[clicked.id]) then
 				C_Timer.After(0, function()
 					if frame:IsShown() and not InCombatLockdown() then
 						frame:Hide()
@@ -546,7 +693,7 @@ local function DecorateRow(row, data)
 		end)
 		row.cast = cast
 	end
-	row.cast:SetAttribute("clickbutton", not data.bind and secureButtons[data.id] or nil)
+	row.cast:SetAttribute("clickbutton", data.id and secureButtons[data.id] or nil)
 	if GameTooltip:IsOwned(row) then
 		ShowRowTooltip(row)
 	end
@@ -809,12 +956,28 @@ events:RegisterEvent("ITEM_DATA_LOAD_RESULT")
 for _, event in ipairs(CHANGE_EVENTS) do
 	events:RegisterEvent(event)
 end
-events:SetScript("OnEvent", function(_, event)
+if C_Housing and C_Housing.GetPlayerOwnedHouses then
+	events:RegisterEvent("PLAYER_HOUSE_LIST_UPDATED") -- Retail seulement (logis)
+end
+events:SetScript("OnEvent", function(_, event, ...)
+	if event == "SPELLS_CHANGED" then
+		flyoutsPending = true -- puis ScheduleUpdate, avec les autres événements de changement
+	end
 	if event == "PLAYER_LOGIN" then
+		flyoutsPending = true
+		if C_Housing and C_Housing.GetPlayerOwnedHouses then
+			C_Housing.GetPlayerOwnedHouses() -- réponse : PLAYER_HOUSE_LIST_UPDATED
+		end
 		if InCombatLockdown() then
 			waitingCombatEnd = true -- /reload en combat : boutons créés à la fin du combat
 		else
+			ns.AddFlyoutDestinations()
 			CreateSecureButtons()
+			ScheduleUpdate()
+		end
+	elseif event == "PLAYER_HOUSE_LIST_UPDATED" then
+		houses = ...
+		if next(secureButtons) then
 			ScheduleUpdate()
 		end
 	elseif event == "PLAYER_REGEN_DISABLED" then
@@ -825,9 +988,7 @@ events:SetScript("OnEvent", function(_, event)
 	elseif event == "PLAYER_REGEN_ENABLED" then
 		if waitingCombatEnd then
 			waitingCombatEnd = nil
-			if not next(secureButtons) then
-				CreateSecureButtons()
-			end
+			CreateSecureButtons()
 			ScheduleUpdate()
 		end
 		local request = pendingRequest

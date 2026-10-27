@@ -39,6 +39,9 @@ double-click the title bar: default size, width fitted to the columns.
   not a member); in **solo mode** or without a team, your character only.
 - **First row, "Bound to"**: where each one's hearthstone is bound. A location **in orange**
   differs from the first character's: that member would end up elsewhere.
+- **Collapsible sections**: Hearth and home, Class, Race, Dungeons and raids (one section per
+  expansion, only the latest expanded at first), Items, Engineering. Click a header to collapse
+  or expand the section (choice kept); its cells show each member's number of ready teleports.
 - **One row per destination** that at least one of the displayed characters can reach. Each cell
   shows **Ready** (green), the remaining **cooldown** (yellow), `-` (no option) or `?` (no info from
   that character yet). The destination name is grayed out when **you** cannot use it right now.
@@ -74,10 +77,26 @@ need to press it in all windows at the same time:
   combat); macros and the key binding keep the option chosen before combat.
 - **WoW Forever**: same rows, limited to what exists there (hearthstone, mage teleports to the
   capitals, Moonglade, engineering transporters).
-- Supported destinations: hearthstone (and its toys, Astral Recall), garrison hearthstone, Dalaran
-  (Broken Isles), class spells (Death Gate, Moonglade, Dreamwalk, Zen Pilgrimage, Hall of the
-  Guardian), mage teleports (from Dornogal to the capitals), engineering wormhole generators and
-  transporters. Not yet: dungeon teleports, house.
+- Supported destinations:
+  - **hearth and home**: hearthstone (with its toys and Astral Recall), house, garrison and
+    Dalaran hearthstones;
+  - **class**: Death Gate, Moonglade, Dreamwalk, Zen Pilgrimage, Hall of the Guardian, all mage
+    teleports (read from the game's spell flyout);
+  - **race**: Vulpera camp, Dark Iron Mole Machine, Haranir Rootwalking;
+  - **dungeons and raids**: the "Hero's Path" spells, read from the game's flyouts (the dungeon
+    name is in the tooltip);
+  - **items**: about 130 teleport items and toys (Kirin Tor rings, faction cloaks, beacons,
+    scrolls...);
+  - **engineering**: wormhole generators and transporters.
+- **Hearthstone**: the original Hearthstone if it is in the bags, otherwise the first hearthstone
+  toy owned, otherwise Astral Recall. The toys share the stone's cooldown.
+
+---
+
+## Credits
+
+The lists of hearthstone toys, wormhole generators, teleport items and spell flyouts come from
+the **TeleportMenu** addon, by **Justwait**. Thanks for this inventory.
 
 ---
 
