@@ -8,8 +8,8 @@ local _, ns = ...
 --   id      : identifiant court et stable, échangé entre clients (message TELE) et nom du bouton
 --             sécurisé PolypodeTeleport_<id> : ne jamais renommer un id publié.
 --   hearth  : ligne de la pierre de foyer (destination = lieu de lien de chacun, GetBindLocation).
---   sources : { spell = id } (sort connu), { item = id } (objet dans les sacs), { toy = id }
---             (jouet possédé, sinon objet du même numéro dans les sacs : WoW Forever).
+--   sources : { spell = id } (sort connu), { item = id } ou { toy = id } (équivalents : jouet
+--             possédé, sinon objet du même numéro dans les sacs).
 -- Libellé : nom du premier moyen (nom du jeu, déjà traduit), sans le préfixe « Téléportation : »,
 -- « Générateur de trou de ver : »... (Teleport.lua, DestinationLabel). Un numéro inconnu du client
 -- ne gêne pas : le moyen n'est jamais possédé.
