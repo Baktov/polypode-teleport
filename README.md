@@ -32,7 +32,8 @@ Nécessite **Polypode 2.12.0** ou plus récent.
 ## Utilisation
 
 Le bouton **Téléports** (barre de titre de la fenêtre Polypode, ou **Tél** dans la colonne des
-modules de la barre d'équipe) ou `/poly teleport` (`/poly tp`) ouvre la fenêtre. Échap la ferme.
+modules de la barre d'équipe) ou `/poly teleport` (`/poly tp`) ouvre la fenêtre. Échap la ferme. La fenêtre se retaille par son coin bas-droit (taille gardée) ;
+double-clic sur la barre de titre : taille par défaut, largeur ajustée aux colonnes.
 
 - **Colonnes** : les membres de l'**équipe sélectionnée**, leader en tête (votre personnage devant
   s'il n'en fait pas partie) ; en **mode solo** ou sans équipe, votre seul personnage.
@@ -46,6 +47,10 @@ modules de la barre d'équipe) ou `/poly teleport` (`/poly tp`) ouvre la fenêtr
   jouet, sort), et la macro de la destination.
 - **Clic sur une ligne** : votre personnage utilise son meilleur moyen pour cette destination (le
   premier prêt : pierre de foyer, puis jouets, puis Rappel astral pour le foyer, par exemple).
+- **Les autres membres suivent** : le même clic ouvre, dans les fenêtres des autres membres de
+  l'équipe, la fenêtre sur **cette seule ligne** (« Demande de ... ») : un clic dessus et ils
+  partent, la fenêtre se ferme. Fermer puis rouvrir la fenêtre rend le tableau complet. Reçue en
+  combat, la demande s'ouvre à la fin du combat (dans la minute).
 
 ### Toute l'équipe d'un coup
 
@@ -65,7 +70,7 @@ propre** meilleur moyen. Il suffit donc de l'actionner dans toutes les fenêtres
 - Le personnage joué est lu en direct (sorts connus, objets des sacs, jouets possédés, temps de
   recharge). Les autres envoient leur état par Polypode (message `TELE`) à chaque connexion d'un
   de vos clients et quand il change (sort appris, objet obtenu, téléport utilisé, foyer déplacé).
-  Rien n'est sauvegardé : l'état est échangé à chaque session.
+  Rien n'est sauvegardé (sauf la taille de la fenêtre) : l'état est échangé à chaque session.
 - **En combat**, la fenêtre se ferme et ne s'ouvre pas (WoW interdit de modifier les boutons de
   sort en combat) ; les macros et le raccourci gardent le moyen choisi avant le combat.
 - **WoW Forever** : mêmes lignes, limitées à ce qui y existe (pierre de foyer, téléportations de
@@ -78,5 +83,7 @@ propre** meilleur moyen. Il suffit donc de l'actionner dans toutes les fenêtres
 ---
 
 ## Version
+
+`1.1.0` : fenêtre retaillable ; un clic sur une ligne ouvre cette ligne, prête à cliquer, chez les autres membres de l'équipe.
 
 `1.0.0` : première version (téléports de l'équipe, lieu de lien, clic et macro pour utiliser son meilleur moyen).

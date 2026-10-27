@@ -18,16 +18,24 @@ local L = ns.L
 -- l'état), + = suite ; envoi = compteur de l'expéditeur ; entrées « id,secondes,moyen » séparées
 -- par « ; » (secondes = recharge restante, 0 = prêt, -1 = illisible ; moyen = rang dans la table) ;
 -- foyer = lieu de lien (premier fragment seulement, en dernier : peut contenir « : »).
+-- Demande : un clic sur une ligne envoie TELEGO:token:nom-royaume:destination aux autres clients ;
+-- chez les membres de la même équipe, la fenêtre s'ouvre sur cette seule ligne, prête à cliquer
+-- (fermer puis rouvrir la fenêtre rend le tableau complet). Reçue en combat : ouverte à la fin du
+-- combat si elle a moins de REQUEST_EXPIRY secondes.
 
 local MESSAGE_TYPE = "TELE"
+local REQUEST_TYPE = "TELEGO"
+local REQUEST_EXPIRY = 60
 local UPDATE_DELAY = 2 -- secondes : regroupe les événements rapprochés (recharges, sacs)
 local GCD_MARGIN = 2 -- une recharge de 2 s ou moins est la recharge globale : compté comme prêt
 local TICK = 1 -- secondes entre deux rafraîchissements des cases, fenêtre ouverte
 local NAME_WIDTH = 180
-local COLUMN_WIDTH = 80
+local COLUMN_WIDTH = 80 -- largeur d'une colonne tant que la fenêtre n'a pas été retaillée
+local COLUMN_MIN, COLUMN_MAX = 60, 140
+local FIXED_WIDTH = 66 -- marges du cadre et du panneau, barre de défilement
 local LIST_TOP = 46 -- sous l'en-tête du cadre et la ligne des noms
 local FRAME_HEIGHT = 420
-local MIN_WIDTH = 380
+local MIN_WIDTH, MIN_HEIGHT = 380, 160
 
 local GREEN, YELLOW, GRAY, ORANGE = "|cff33dd33", "|cffffd200", "|cff808080", "|cffff8000"
 
@@ -37,6 +45,9 @@ local secureButtons = {} -- [id] = bouton sécurisé PolypodeTeleport_<id>
 local labels = {} -- [id] = libellé de la destination (nom du jeu, mis en cache)
 local columns = {} -- clés des personnages affichés en colonnes
 local headers = {} -- textes des noms au-dessus des colonnes
+local columnWidth = COLUMN_WIDTH
+local requested -- { from = clé, id = destination } : fenêtre ouverte sur la demande d'un membre
+local pendingRequest -- demande reçue en combat : { from, id, time }
 local lastSignature, sendSeq = nil, 0
 local updatePending, refreshPending, waitingCombatEnd
 local frame, listPanel
@@ -283,7 +294,22 @@ local function ScheduleUpdate()
 	end)
 end
 
+-- Demande aux autres clients d'ouvrir la ligne de la destination (filtrés à la réception).
+local function SendRequest(id)
+	local token = P.GetTeamToken and P.GetTeamToken()
+	if token and P.WhisperOnline then
+		P.WhisperOnline(string.format("%s:%s:%s:%s", REQUEST_TYPE, token, P.GetCharKey(), id))
+	end
+end
+
 -- FENÊTRE ---------------------------------------------------------------------------------------
+
+-- Taille de la fenêtre, gardée dans PolypodeTeleportDB.window (largeur absente : ajustée aux colonnes).
+local function WindowSettings()
+	PolypodeTeleportDB = PolypodeTeleportDB or {}
+	PolypodeTeleportDB.window = PolypodeTeleportDB.window or {}
+	return PolypodeTeleportDB.window
+end
 
 -- Colonnes : membres de l'équipe sélectionnée, leader en tête (personnage joué devant s'il n'en
 -- est pas) ; le seul personnage joué en mode solo ou sans équipe.
@@ -379,8 +405,13 @@ local function DestinationLabel(destination)
 	return labels[destination.id]
 end
 
--- Lignes : lieu de lien, puis les destinations qu'au moins un personnage affiché possède.
+-- Lignes : lieu de lien, puis les destinations qu'au moins un personnage affiché possède ; sur
+-- demande d'un membre, la seule destination demandée (et le lieu de lien pour la pierre de foyer).
 local function BuildItems()
+	if requested then
+		local hearth = ns.DESTINATION_BY_ID[requested.id].hearth
+		return hearth and { { bind = true }, { id = requested.id } } or { { id = requested.id } }
+	end
 	local items = { { bind = true } }
 	for _, destination in ipairs(ns.DESTINATIONS) do
 		for _, key in ipairs(columns) do
@@ -432,6 +463,9 @@ local function ShowRowTooltip(row)
 		end
 		GameTooltip:AddLine(" ")
 		GameTooltip:AddLine(L["Clic : utiliser votre meilleur moyen."], 1, 1, 1, true)
+		if not requested and #columns > 1 then
+			GameTooltip:AddLine(L["Les autres fenêtres de l'équipe reçoivent cette ligne, prête à cliquer."], 1, 1, 1, true)
+		end
 		GameTooltip:AddLine(L["Macro pour toutes les fenêtres : %s"]:format("/click PolypodeTeleport_" .. data.id),
 			0.6, 0.6, 0.6, true)
 	end
@@ -451,10 +485,11 @@ local function DecorateRow(row, data)
 			cell = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
 			cell:SetJustifyH("CENTER")
 			cell:SetWordWrap(false)
-			cell:SetWidth(COLUMN_WIDTH - 4)
-			cell:SetPoint("LEFT", row, "LEFT", NAME_WIDTH + (i - 1) * COLUMN_WIDTH, 0)
 			row.cells[i] = cell
 		end
+		cell:SetWidth(columnWidth - 4)
+		cell:ClearAllPoints()
+		cell:SetPoint("LEFT", row, "LEFT", NAME_WIDTH + (i - 1) * columnWidth, 0)
 		if data.bind then
 			local bind = BindOf(key)
 			if not bind or bind == "" then
@@ -488,6 +523,26 @@ local function DecorateRow(row, data)
 			ShowRowTooltip(row)
 		end)
 		cast:SetScript("OnLeave", GameTooltip_Hide)
+		-- Après l'action sécurisée : demande aux autres fenêtres, ou fermeture de la fenêtre ouverte
+		-- sur demande quand le téléport était prêt.
+		cast:HookScript("OnClick", function()
+			local clicked = row.data
+			if not clicked or clicked.bind then
+				return
+			end
+			if not requested then
+				SendRequest(clicked.id)
+				return
+			end
+			local state = own.dest[clicked.id]
+			if state and state.ready and state.ready <= GetServerTime() then
+				C_Timer.After(0, function()
+					if frame:IsShown() and not InCombatLockdown() then
+						frame:Hide()
+					end
+				end)
+			end
+		end)
 		row.cast = cast
 	end
 	row.cast:SetAttribute("clickbutton", not data.bind and secureButtons[data.id] or nil)
@@ -496,18 +551,29 @@ local function DecorateRow(row, data)
 	end
 end
 
--- Noms des colonnes au-dessus de la liste, et largeur de la fenêtre selon leur nombre.
+-- Largeur des colonnes et noms au-dessus de la liste. Tant que la fenêtre n'a pas été retaillée,
+-- sa largeur suit le nombre de colonnes ; ensuite les colonnes se partagent la largeur choisie.
 local function LayoutColumns()
+	local count = math.max(1, #columns)
+	local minWidth = math.max(MIN_WIDTH, FIXED_WIDTH + NAME_WIDTH + count * COLUMN_MIN)
+	frame:SetResizeBounds(minWidth, MIN_HEIGHT)
+	if not WindowSettings().width then
+		frame:SetWidth(math.max(MIN_WIDTH, FIXED_WIDTH + NAME_WIDTH + count * COLUMN_WIDTH))
+	elseif frame:GetWidth() < minWidth then
+		frame:SetWidth(minWidth)
+	end
+	columnWidth = math.min(COLUMN_MAX, (frame:GetWidth() - FIXED_WIDTH - NAME_WIDTH) / count)
 	for i, key in ipairs(columns) do
 		local header = headers[i]
 		if not header then
 			header = listPanel:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
 			header:SetJustifyH("CENTER")
 			header:SetWordWrap(false)
-			header:SetWidth(COLUMN_WIDTH - 4)
-			header:SetPoint("TOPLEFT", listPanel, "TOPLEFT", 10 + NAME_WIDTH + (i - 1) * COLUMN_WIDTH, -28)
 			headers[i] = header
 		end
+		header:SetWidth(columnWidth - 4)
+		header:ClearAllPoints()
+		header:SetPoint("TOPLEFT", listPanel, "TOPLEFT", 10 + NAME_WIDTH + (i - 1) * columnWidth, -28)
 		local entry = P.db.roster[key]
 		local color = entry and entry.class and RAID_CLASS_COLORS[entry.class]
 		local name = (P.GetDisplayName(key):match("^%S+")) or key
@@ -517,15 +583,25 @@ local function LayoutColumns()
 	for i = #columns + 1, #headers do
 		headers[i]:Hide()
 	end
-	frame:SetWidth(math.max(MIN_WIDTH, 24 + 20 + 22 + NAME_WIDTH + #columns * COLUMN_WIDTH))
+end
+
+local function RedecorateRows()
+	listPanel.scrollBox:ForEachFrame(function(row)
+		if row.data then
+			DecorateRow(row, row.data)
+		end
+	end)
 end
 
 local function Build()
+	local settings = WindowSettings()
 	frame = CreateFrame("Frame", "PolypodeTeleportFrame", UIParent, "BackdropTemplate")
-	frame:SetSize(MIN_WIDTH, FRAME_HEIGHT)
+	frame:SetSize(math.max(settings.width or MIN_WIDTH, MIN_WIDTH), math.max(settings.height or FRAME_HEIGHT, MIN_HEIGHT))
 	frame:SetPoint("CENTER")
 	frame:SetFrameStrata("DIALOG")
 	frame:SetMovable(true)
+	frame:SetResizable(true)
+	frame:SetResizeBounds(MIN_WIDTH, MIN_HEIGHT)
 	frame:SetClampedToScreen(true)
 	frame:EnableMouse(true)
 	frame:RegisterForDrag("LeftButton")
@@ -540,6 +616,9 @@ local function Build()
 	frame:SetBackdropColor(0, 0, 0, 0.9)
 	frame:Hide()
 	tinsert(UISpecialFrames, "PolypodeTeleportFrame") -- Échap ferme la fenêtre
+	frame:SetScript("OnHide", function()
+		requested = nil -- rouverte, la fenêtre montre de nouveau le tableau complet
+	end)
 
 	local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
 	title:SetPoint("TOP", 0, -14)
@@ -565,11 +644,40 @@ local function Build()
 		sinceTick = 0
 		ComputeOwn()
 		UpdateSecureButtons()
-		listPanel.scrollBox:ForEachFrame(function(row)
-			if row.data then
-				DecorateRow(row, row.data)
-			end
+		RedecorateRows()
+	end)
+
+	-- Poignée de redimensionnement (coin bas-droit), taille gardée dans PolypodeTeleportDB.window.
+	local grip = CreateFrame("Button", nil, frame)
+	grip:SetSize(16, 16)
+	grip:SetPoint("BOTTOMRIGHT", -2, 2)
+	grip:SetFrameLevel(frame:GetFrameLevel() + 10)
+	grip:SetNormalTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Up")
+	grip:SetHighlightTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Highlight")
+	grip:SetPushedTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Down")
+	grip:SetScript("OnMouseDown", function()
+		frame:StartSizing("BOTTOMRIGHT")
+	end)
+	grip:SetScript("OnMouseUp", function()
+		frame:StopMovingOrSizing()
+		local current = WindowSettings()
+		current.width, current.height = frame:GetSize()
+	end)
+	frame.resizeGrip = grip
+	-- Double-clic sur la barre de titre : taille par défaut, largeur de nouveau ajustée aux colonnes.
+	if P.EnableTitleDoubleClick then
+		P.EnableTitleDoubleClick(frame, function()
+			local current = WindowSettings()
+			current.width, current.height = nil, nil
+			frame:SetHeight(FRAME_HEIGHT)
+			P.RefreshTeleport()
 		end)
+	end
+	frame:SetScript("OnSizeChanged", function()
+		if frame:IsShown() and not InCombatLockdown() then
+			LayoutColumns()
+			RedecorateRows()
+		end
 	end)
 
 	P.ui.teleportFrame = frame
@@ -588,8 +696,42 @@ function P.RefreshTeleport()
 		return
 	end
 	columns = ColumnKeys()
+	frame.TitleText:SetText(requested and L["Demande de %s"]:format(P.GetDisplayName(requested.from))
+		or L["Polypode Téléports"])
 	LayoutColumns()
 	P.SetListData(listPanel, BuildItems())
+end
+
+-- Ouvre la fenêtre sur la seule destination demandée par un membre de l'équipe.
+local function OpenRequest(key, id)
+	if not next(secureButtons) then
+		return
+	end
+	if not frame then
+		Build()
+	end
+	requested = { from = key, id = id }
+	ComputeOwn()
+	UpdateSecureButtons()
+	frame:Show()
+	P.RefreshTeleport()
+end
+
+-- Demande reçue (token déjà vérifié par Polypode) : rest = « nom-royaume:destination ». Retenue
+-- seulement si l'expéditeur est une colonne de notre fenêtre (même équipe).
+local function OnRequest(rest, sender)
+	local key, id = strsplit(":", rest or "", 2)
+	if not (key and id and ns.DESTINATION_BY_ID[id] and P.IsSender and P.IsSender(sender, key)) then
+		return
+	end
+	if key == P.GetCharKey() or not tContains(ColumnKeys(), key) then
+		return
+	end
+	if InCombatLockdown() then
+		pendingRequest = { from = key, id = id, time = GetTime() }
+		return
+	end
+	OpenRequest(key, id)
 end
 
 -- Ouvre / ferme la fenêtre (bouton « Téléports », /poly teleport).
@@ -638,6 +780,7 @@ end)
 
 if P.RegisterMessageHandler then
 	P.RegisterMessageHandler(MESSAGE_TYPE, OnMessage)
+	P.RegisterMessageHandler(REQUEST_TYPE, OnRequest)
 	P.RegisterPeerCallback(function(sender)
 		SendOwn(sender) -- un client s'annonce : il reçoit notre état
 	end)
@@ -685,6 +828,11 @@ events:SetScript("OnEvent", function(_, event)
 				CreateSecureButtons()
 			end
 			ScheduleUpdate()
+		end
+		local request = pendingRequest
+		pendingRequest = nil
+		if request and GetTime() - request.time <= REQUEST_EXPIRY then
+			OpenRequest(request.from, request.id)
 		end
 	elseif event == "ITEM_DATA_LOAD_RESULT" then
 		if frame and frame:IsShown() then

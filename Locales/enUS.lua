@@ -27,4 +27,6 @@ P.AddTranslations(ns.L, "enUS", {
 	["%d h %02d"] = "%dh %02d",
 	["Clic : utiliser votre meilleur moyen."] = "Click: use your best option.",
 	["Macro pour toutes les fenêtres : %s"] = "Macro for all windows: %s",
+	["Demande de %s"] = "Request from %s",
+	["Les autres fenêtres de l'équipe reçoivent cette ligne, prête à cliquer."] = "The other windows of the team receive this row, ready to click.",
 })

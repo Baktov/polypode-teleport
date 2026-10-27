@@ -32,7 +32,8 @@ Requires **Polypode 2.12.0** or newer.
 ## Usage
 
 The **Teleports** button (title bar of the Polypode window, or **Tel** in the module column of the
-team bar) or `/poly teleport` (`/poly tp`) opens the window. Escape closes it.
+team bar) or `/poly teleport` (`/poly tp`) opens the window. Escape closes it. Resize the window from its bottom-right corner (size kept);
+double-click the title bar: default size, width fitted to the columns.
 
 - **Columns**: the members of the **selected team**, leader first (your character in front if it is
   not a member); in **solo mode** or without a team, your character only.
@@ -45,6 +46,10 @@ team bar) or `/poly teleport` (`/poly tp`) opens the window. Escape closes it.
   and the destination's macro.
 - **Click a row**: your character uses its best option for that destination (the first one ready:
   hearthstone, then toys, then Astral Recall for the hearth, for example).
+- **The other members follow**: the same click opens, in the windows of the other team members,
+  the window on **that single row** ("Request from ..."): one click on it and they go, the window
+  closes. Closing and reopening the window brings back the full table. Received in combat, the
+  request opens when combat ends (within a minute).
 
 ### The whole team at once
 
@@ -63,8 +68,8 @@ need to press it in all windows at the same time:
 
 - The played character is read live (known spells, bag items, owned toys, cooldowns). The others
   send their state through Polypode (`TELE` message) each time one of your clients connects and
-  when it changes (spell learned, item obtained, teleport used, hearth moved). Nothing is saved:
-  the state is exchanged each session.
+  when it changes (spell learned, item obtained, teleport used, hearth moved). Nothing is saved
+  (except the window size): the state is exchanged each session.
 - **In combat**, the window closes and does not open (WoW forbids changing spell buttons in
   combat); macros and the key binding keep the option chosen before combat.
 - **WoW Forever**: same rows, limited to what exists there (hearthstone, mage teleports to the
