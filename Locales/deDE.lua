@@ -37,4 +37,8 @@ P.AddTranslations(ns.L, "deDE", {
 	["Ingénierie"] = "Ingenieurskunst",
 	["Nombre de téléports prêts par personnage."] = "Anzahl der bereiten Teleports pro Charakter.",
 	["Clic : replier ou déplier la section."] = "Klick: Abschnitt ein- oder ausklappen.",
+	["Pierre de foyer au hasard"] = "Zufälliger Ruhestein",
+	["Utilise un jouet de pierre de foyer tiré au sort parmi ceux que vous possédez (nouveau tirage après chaque utilisation), au lieu de la pierre de foyer d'origine. Même temps de recharge."] = "Verwendet ein zufällig gewähltes Ruhestein-Spielzeug aus Ihrem Besitz (nach jeder Verwendung neu gewählt) statt des ursprünglichen Ruhesteins. Gleiche Abklingzeit.",
+	["Options des téléports"] = "Teleport-Optionen",
+	["Clic droit : options (pierre de foyer au hasard)"] = "Rechtsklick: Optionen (zufälliger Ruhestein)",
 })

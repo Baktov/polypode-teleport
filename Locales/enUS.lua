@@ -38,4 +38,8 @@ P.AddTranslations(ns.L, "enUS", {
 	["Ingénierie"] = "Engineering",
 	["Nombre de téléports prêts par personnage."] = "Number of teleports ready per character.",
 	["Clic : replier ou déplier la section."] = "Click: collapse or expand the section.",
+	["Pierre de foyer au hasard"] = "Random hearthstone",
+	["Utilise un jouet de pierre de foyer tiré au sort parmi ceux que vous possédez (nouveau tirage après chaque utilisation), au lieu de la pierre de foyer d'origine. Même temps de recharge."] = "Uses a hearthstone toy drawn at random among those you own (new draw after each use), instead of the original Hearthstone. Same cooldown.",
+	["Options des téléports"] = "Teleport options",
+	["Clic droit : options (pierre de foyer au hasard)"] = "Right-click: options (random hearthstone)",
 })

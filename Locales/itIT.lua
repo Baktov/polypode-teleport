@@ -37,4 +37,8 @@ P.AddTranslations(ns.L, "itIT", {
 	["Ingénierie"] = "Ingegneria",
 	["Nombre de téléports prêts par personnage."] = "Numero di teletrasporti pronti per personaggio.",
 	["Clic : replier ou déplier la section."] = "Clic: comprimi o espandi la sezione.",
+	["Pierre de foyer au hasard"] = "Pietra del ritorno casuale",
+	["Utilise un jouet de pierre de foyer tiré au sort parmi ceux que vous possédez (nouveau tirage après chaque utilisation), au lieu de la pierre de foyer d'origine. Même temps de recharge."] = "Usa un giocattolo pietra del ritorno scelto a caso tra quelli che possiedi (nuova estrazione dopo ogni uso), al posto della pietra del ritorno originale. Stesso tempo di recupero.",
+	["Options des téléports"] = "Opzioni dei teletrasporti",
+	["Clic droit : options (pierre de foyer au hasard)"] = "Clic destro: opzioni (pietra del ritorno casuale)",
 })

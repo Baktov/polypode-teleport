@@ -155,14 +155,47 @@ local function EvaluateSource(source)
 	end
 end
 
+-- Option « Pierre de foyer au hasard » (PolypodeTeleportDB.randomHearth).
+local function RandomHearth()
+	return PolypodeTeleportDB ~= nil and PolypodeTeleportDB.randomHearth == true
+end
+
+-- Jouet de foyer tiré au sort (rang dans les moyens de la pierre de foyer), gardé jusqu'à la
+-- prochaine utilisation ; nil si aucun jouet de foyer n'est possédé.
+local hearthPick
+local function HearthPick(destination)
+	local current = hearthPick and destination.sources[hearthPick]
+	if current and EvaluateSource(current) then
+		return hearthPick
+	end
+	local owned = {}
+	for index, source in ipairs(destination.sources) do
+		if source.toy and EvaluateSource(source) then
+			owned[#owned + 1] = index
+		end
+	end
+	hearthPick = #owned > 0 and owned[math.random(#owned)] or nil
+	return hearthPick
+end
+
 -- Meilleur moyen de chaque destination : le premier prêt dans l'ordre de la table, sinon celui
--- qui sera prêt le plus tôt. ready = heure serveur où il sera prêt (nil : recharge illisible).
+-- qui sera prêt le plus tôt (pierre de foyer au hasard : le jouet tiré au sort, retiré après
+-- chaque utilisation). ready = heure serveur où il sera prêt (nil : recharge illisible).
 local function ComputeOwn()
 	local now = GetServerTime()
 	local dest = {}
 	for _, destination in ipairs(ns.DESTINATIONS) do
 		local best, bestRemaining
-		for index, source in ipairs(destination.sources) do
+		local pick = destination.hearth and RandomHearth() and HearthPick(destination)
+		if pick then
+			local kind, value, remaining = EvaluateSource(destination.sources[pick])
+			best, bestRemaining = { kind = kind, value = value, source = pick }, remaining
+			local previous = own.dest[destination.id]
+			if previous and previous.ready and previous.ready <= now and remaining and remaining > 0 then
+				hearthPick = nil -- pierre utilisée : autre jouet au prochain calcul
+			end
+		end
+		for index, source in ipairs(pick and {} or destination.sources) do
 			local kind, value, remaining = EvaluateSource(source)
 			if kind then
 				if remaining == 0 then
@@ -903,6 +936,38 @@ end
 
 -- INTÉGRATION À POLYPODE ------------------------------------------------------------------------
 
+-- OPTIONS : sous-catégorie « Téléports » du panneau de Polypode (P.optionsCategory, créée à son
+-- PLAYER_LOGIN), ou catégorie « Polypode Téléports » à part ; rappelée dans la petite fenêtre du
+-- clic droit sur le bouton « Téléports » (P.ToggleOptionsPopup).
+local settingsPopup
+local function BuildSettingsPanel()
+	if not (Settings and Settings.RegisterProxySetting) then
+		return
+	end
+	local category
+	if P.optionsCategory and Settings.RegisterVerticalLayoutSubcategory then
+		category = Settings.RegisterVerticalLayoutSubcategory(P.optionsCategory, L["Téléports"])
+	else
+		category = Settings.RegisterVerticalLayoutCategory(L["Polypode Téléports"])
+	end
+	local setting = Settings.RegisterProxySetting(category, "POLYPODE_TELEPORT_RANDOM_HEARTH",
+		Settings.VarType.Boolean, L["Pierre de foyer au hasard"], false,
+		RandomHearth,
+		function(value)
+			PolypodeTeleportDB = PolypodeTeleportDB or {}
+			PolypodeTeleportDB.randomHearth = value
+			hearthPick = nil
+			ScheduleUpdate()
+		end)
+	local tooltip = L["Utilise un jouet de pierre de foyer tiré au sort parmi ceux que vous possédez "
+		.. "(nouveau tirage après chaque utilisation), au lieu de la pierre de foyer d'origine. Même "
+		.. "temps de recharge."]
+	Settings.CreateCheckbox(category, setting, tooltip)
+	Settings.RegisterAddOnCategory(category)
+	settingsPopup = { key = "Teleport", title = L["Options des téléports"], category = category,
+		items = { { kind = "check", setting = setting, tooltip = tooltip } } }
+end
+
 ns.OnLanguageApplied(function()
 	BINDING_HEADER_POLYPODETELEPORT = L["Polypode Téléports"]
 	_G["BINDING_NAME_CLICK PolypodeTeleport_hearth:LeftButton"] = L["Pierre de foyer (votre meilleur moyen)"]
@@ -910,11 +975,17 @@ ns.OnLanguageApplied(function()
 		P.AddTitleButton({
 			text = L["Téléports"], -- nom du module traduit (MODULES.md, « Langues »)
 			width = 80,
-			onClick = function()
-				P.ToggleTeleport()
+			rightClick = true,
+			onClick = function(button, mouseButton)
+				if mouseButton ~= "RightButton" then
+					P.ToggleTeleport()
+				elseif P.ToggleOptionsPopup and settingsPopup then
+					P.ToggleOptionsPopup(button, settingsPopup)
+				end
 			end,
 			tooltip = { L["Polypode Téléports"],
-				L["Téléports de l'équipe : prêts ou en recharge ; clic sur une ligne pour utiliser le vôtre."] },
+				L["Téléports de l'équipe : prêts ou en recharge ; clic sur une ligne pour utiliser le vôtre."],
+				L["Clic droit : options (pierre de foyer au hasard)"] },
 			onCreate = function(button)
 				P.ui.teleportButton = button
 			end,
@@ -965,6 +1036,7 @@ events:SetScript("OnEvent", function(_, event, ...)
 	end
 	if event == "PLAYER_LOGIN" then
 		flyoutsPending = true
+		C_Timer.After(0, BuildSettingsPanel) -- après P.optionsCategory, créée au PLAYER_LOGIN de Polypode
 		if C_Housing and C_Housing.GetPlayerOwnedHouses then
 			C_Housing.GetPlayerOwnedHouses() -- réponse : PLAYER_HOUSE_LIST_UPDATED
 		end

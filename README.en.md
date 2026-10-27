@@ -89,7 +89,10 @@ need to press it in all windows at the same time:
     scrolls...);
   - **engineering**: wormhole generators and transporters.
 - **Hearthstone**: the original Hearthstone if it is in the bags, otherwise the first hearthstone
-  toy owned, otherwise Astral Recall. The toys share the stone's cooldown.
+  toy owned, otherwise Astral Recall. The toys share the stone's cooldown. **"Random
+  hearthstone"** option (right-click the Teleports button, or Options → AddOns → Polypode →
+  Teleports): a hearthstone toy drawn at random among those owned, new draw after each use.
+  Setting shared by all characters of the account.
 
 ---
 

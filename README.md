@@ -92,6 +92,9 @@ propre** meilleur moyen. Il suffit donc de l'actionner dans toutes les fenêtres
   - **ingénierie** : générateurs de trou de ver et transporteurs.
 - **Pierre de foyer** : la pierre de foyer d'origine si elle est dans les sacs, sinon le premier
   jouet de foyer possédé, sinon le Rappel astral. Les jouets partagent la recharge de la pierre.
+  Option **« Pierre de foyer au hasard »** (clic droit sur le bouton Téléports, ou Options →
+  AddOns → Polypode → Téléports) : un jouet de foyer tiré au sort parmi ceux possédés, nouveau
+  tirage après chaque utilisation. Réglage commun à tous vos personnages du compte.
 
 ---
 
@@ -104,6 +107,8 @@ recensement.
 ---
 
 ## Version
+
+`1.3.0` : option « Pierre de foyer au hasard » (clic droit sur le bouton Téléports).
 
 `1.2.0` : sections repliables ; maison, téléports de donjon et de raid, toutes les téléportations de mage, raciaux, environ 130 objets de téléport ; listes de pierres de foyer et de trous de ver mises à jour (reprises de TeleportMenu).
 
