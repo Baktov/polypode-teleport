@@ -1,0 +1,5 @@
+<Bindings>
+  <!-- Clic sur le bouton sécurisé de la pierre de foyer (Teleport.lua) : chaque fenêtre utilise
+       son meilleur moyen. Libellés posés par Teleport.lua (BINDING_HEADER_POLYPODETELEPORT). -->
+  <Binding name="CLICK PolypodeTeleport_hearth:LeftButton" header="POLYPODETELEPORT" category="Polypode"/>
+</Bindings>

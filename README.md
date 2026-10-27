@@ -1,0 +1,82 @@
+# Polypode Téléports
+
+*English version: [README.en.md](README.en.md)*
+
+Les **téléports de votre équipe** en un coup d'œil : pour chaque destination (pierre de foyer,
+sorts de classe, téléportations de mage, générateurs de trou de ver...), qui peut y aller, qui est
+en recharge et pour combien de temps, et où chacun a lié sa pierre de foyer. Un clic sur une ligne
+utilise **votre** meilleur moyen ; une macro diffusée à toutes vos fenêtres fait partir toute
+l'équipe, chacun avec le sien. Addon compagnon de [Polypode](https://github.com/Baktov/polypode),
+séparé : chargé ou non depuis la liste des AddOns de WoW, par personnage.
+
+Nécessite **Polypode 2.12.0** ou plus récent.
+
+> **Langues** : français, anglais, allemand, espagnol, italien et portugais du Brésil, selon la
+> langue choisie dans Polypode (option « Langue / Language »). Les traductions ont été faites avec
+> l'aide de Claude, l'IA d'Anthropic : les retours de joueurs dont c'est la langue maternelle sont
+> les bienvenus ([issue GitHub](https://github.com/Baktov/polypode-teleport/issues)).
+
+---
+
+## Installation
+
+1. Installer d'abord **Polypode** (dépendance obligatoire).
+2. Placer le dossier `Polypode_Teleport` dans `World of Warcraft/_retail_/Interface/AddOns/`
+   (et, pour **WoW Forever**, dans `World of Warcraft/_forever_/Interface/AddOns/`, par
+   exemple par une jonction `mklink /J`).
+3. Cocher « Polypode Téléports » dans la liste des AddOns, **sur chaque personnage** de l'équipe :
+   chacun envoie l'état de ses téléports.
+
+---
+
+## Utilisation
+
+Le bouton **Téléports** (barre de titre de la fenêtre Polypode, ou **Tél** dans la colonne des
+modules de la barre d'équipe) ou `/poly teleport` (`/poly tp`) ouvre la fenêtre. Échap la ferme.
+
+- **Colonnes** : les membres de l'**équipe sélectionnée**, leader en tête (votre personnage devant
+  s'il n'en fait pas partie) ; en **mode solo** ou sans équipe, votre seul personnage.
+- **Première ligne, « Lié à »** : le lieu de lien de la pierre de foyer de chacun. Un lieu
+  **en orange** diffère de celui du premier personnage : ce membre partirait ailleurs.
+- **Une ligne par destination** que l'un au moins des personnages affichés peut atteindre. Chaque
+  case indique **Prêt** (vert), le **temps de recharge** restant (jaune), `-` (aucun moyen) ou
+  `?` (pas encore d'infos de ce personnage). Le nom de la destination est grisé quand **vous** ne
+  pouvez pas l'utiliser maintenant.
+- **Infobulle** d'une ligne : l'état de chaque membre avec le moyen qu'il utiliserait (pierre,
+  jouet, sort), et la macro de la destination.
+- **Clic sur une ligne** : votre personnage utilise son meilleur moyen pour cette destination (le
+  premier prêt : pierre de foyer, puis jouets, puis Rappel astral pour le foyer, par exemple).
+
+### Toute l'équipe d'un coup
+
+Un addon ne peut pas lancer un sort ou utiliser un objet pour une autre fenêtre. Mais chaque
+destination a un bouton, `PolypodeTeleport_<destination>`, sur lequel chaque fenêtre a posé **son
+propre** meilleur moyen. Il suffit donc de l'actionner dans toutes les fenêtres en même temps :
+
+- **Pierre de foyer** : raccourci « Pierre de foyer (votre meilleur moyen) », dans Options →
+  Raccourcis → Polypode, à diffuser à toutes les fenêtres avec votre outil de multiboxing ;
+- **autre destination** : une macro `/click PolypodeTeleport_<destination>` (rappelée dans
+  l'infobulle de la ligne), placée dans une barre d'action de chaque personnage.
+
+---
+
+## Fonctionnement
+
+- Le personnage joué est lu en direct (sorts connus, objets des sacs, jouets possédés, temps de
+  recharge). Les autres envoient leur état par Polypode (message `TELE`) à chaque connexion d'un
+  de vos clients et quand il change (sort appris, objet obtenu, téléport utilisé, foyer déplacé).
+  Rien n'est sauvegardé : l'état est échangé à chaque session.
+- **En combat**, la fenêtre se ferme et ne s'ouvre pas (WoW interdit de modifier les boutons de
+  sort en combat) ; les macros et le raccourci gardent le moyen choisi avant le combat.
+- **WoW Forever** : mêmes lignes, limitées à ce qui y existe (pierre de foyer, téléportations de
+  mage vers les capitales, Reflet-de-Lune, transporteurs d'ingénierie).
+- Destinations prises en charge : pierre de foyer (et ses jouets, Rappel astral), pierre de foyer
+  de fief, Dalaran (Îles Brisées), sorts de classe (Porte de la mort, Reflet-de-Lune, Voie des
+  rêves, Pèlerinage zen, Salle du Gardien), téléportations de mage (de Dornogal aux capitales),
+  générateurs de trou de ver et transporteurs d'ingénierie. Pas encore : téléports de donjon, maison.
+
+---
+
+## Version
+
+`1.0.0` : première version (téléports de l'équipe, lieu de lien, clic et macro pour utiliser son meilleur moyen).
