@@ -95,20 +95,21 @@ local function HasToy(itemID)
 end
 
 -- Moyen possédé : type d'action du bouton sécurisé (spell, toy, item), valeur, recharge restante.
--- Un jouet absent de la collection peut être un objet dans les sacs (WoW Forever).
+-- Objet ou jouet : beaucoup d'objets de téléport sont devenus des jouets (pierres de foyer de fief
+-- et de Dalaran), et un jouet peut n'être qu'un objet dans les sacs (WoW Forever) : les deux sont
+-- cherchés dans la collection de jouets puis dans les sacs.
 local function EvaluateSource(source)
 	if source.spell then
 		if SpellKnown(source.spell) then
 			return "spell", source.spell, SpellRemaining(source.spell)
 		end
-	elseif source.toy then
-		if HasToy(source.toy) then
-			return "toy", source.toy, ItemRemaining(source.toy)
-		elseif ItemCount(source.toy) > 0 then
-			return "item", source.toy, ItemRemaining(source.toy)
-		end
-	elseif source.item and ItemCount(source.item) > 0 then
-		return "item", source.item, ItemRemaining(source.item)
+		return
+	end
+	local itemID = source.toy or source.item
+	if HasToy(itemID) then
+		return "toy", itemID, ItemRemaining(itemID)
+	elseif ItemCount(itemID) > 0 then
+		return "item", itemID, ItemRemaining(itemID)
 	end
 end
 

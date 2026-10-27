@@ -84,6 +84,8 @@ propre** meilleur moyen. Il suffit donc de l'actionner dans toutes les fenêtres
 
 ## Version
 
+`1.1.1` : pierres de foyer de fief et de Dalaran reconnues (ce sont des jouets, elles étaient cherchées dans les sacs).
+
 `1.1.0` : fenêtre retaillable ; un clic sur une ligne ouvre cette ligne, prête à cliquer, chez les autres membres de l'équipe.
 
 `1.0.0` : première version (téléports de l'équipe, lieu de lien, clic et macro pour utiliser son meilleur moyen).

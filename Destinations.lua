@@ -29,8 +29,8 @@ hearthSources[#hearthSources + 1] = { spell = 556 } -- Rappel astral (chaman), r
 
 ns.DESTINATIONS = {
 	{ id = "hearth", hearth = true, sources = hearthSources },
-	{ id = "garrison", sources = { { item = 110560 } } }, -- Pierre de foyer de fief
-	{ id = "dalaran", sources = { { spell = 224869 }, { item = 140192 } } }, -- Dalaran (Îles Brisées)
+	{ id = "garrison", sources = { { toy = 110560 } } }, -- Pierre de foyer de fief
+	{ id = "dalaran", sources = { { spell = 224869 }, { toy = 140192 } } }, -- Dalaran (Îles Brisées)
 
 	-- Sorts de classe
 	{ id = "acherus", sources = { { spell = 50977 } } }, -- Porte de la mort (chevalier de la mort)
