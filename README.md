@@ -108,6 +108,8 @@ recensement.
 
 ## Version
 
+`1.3.2` : plus d'avertissement « Bindings.xml : Unrecognized XML: Binding » (fichier du raccourci retiré de la liste du `.toc` : le jeu le charge tout seul ; raccourci inchangé).
+
 `1.3.1` : clic sur une ligne sans effet quand l'option du jeu « Lancer les actions à l'appui de la touche » est active (réglage par défaut, constaté sur WoW Forever).
 
 `1.3.0` : option « Pierre de foyer au hasard » (clic droit sur le bouton Téléports).
