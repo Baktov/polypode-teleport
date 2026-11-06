@@ -108,6 +108,8 @@ recensement.
 
 ## Version
 
+`1.3.1` : clic sur une ligne sans effet quand l'option du jeu « Lancer les actions à l'appui de la touche » est active (réglage par défaut, constaté sur WoW Forever).
+
 `1.3.0` : option « Pierre de foyer au hasard » (clic droit sur le bouton Téléports).
 
 `1.2.0` : sections repliables ; maison, téléports de donjon et de raid, toutes les téléportations de mage, raciaux, environ 130 objets de téléport ; listes de pierres de foyer et de trous de ver mises à jour (reprises de TeleportMenu).

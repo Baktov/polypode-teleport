@@ -692,6 +692,9 @@ local function DecorateRow(row, data)
 		local cast = CreateFrame("Button", nil, row, "SecureActionButtonTemplate")
 		cast:SetAllPoints()
 		cast:RegisterForClicks("AnyUp")
+		-- Au relâchement quel que soit le réglage « action à l'appui » (ActionButtonUseKeyDown, actif
+		-- par défaut) : sans cet attribut, le bouton n'écoutant que le relâchement ne fait rien.
+		cast:SetAttribute("useOnKeyDown", false)
 		cast:SetAttribute("type", "click")
 		local highlight = cast:CreateTexture(nil, "HIGHLIGHT")
 		highlight:SetAllPoints()
