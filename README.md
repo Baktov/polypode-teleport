@@ -106,7 +106,18 @@ recensement.
 
 ---
 
+## Licence
+
+Polypode Téléports est un logiciel libre, sous licence **GNU GPL version 3** (fichier
+[`LICENSE`](LICENSE)) : vous pouvez le reprendre, le modifier et le redistribuer, à condition de
+garder cette licence et de citer l'auteur. Copyright (C) 2026 Baktov.
+
+Les listes reprises de TeleportMenu (Justwait ; voir « Crédits ») restent sous leur licence MIT :
+voir [`LICENSE-TeleportMenu.txt`](LICENSE-TeleportMenu.txt).
+
 ## Version
+
+`1.3.3` : licence libre **GNU GPL version 3** (fichier `LICENSE`) ; mention de la licence MIT de TeleportMenu pour les listes qui en viennent (`LICENSE-TeleportMenu.txt`).
 
 `1.3.2` : plus d'avertissement « Bindings.xml : Unrecognized XML: Binding » (fichier du raccourci retiré de la liste du `.toc` : le jeu le charge tout seul ; raccourci inchangé).
 

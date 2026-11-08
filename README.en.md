@@ -103,6 +103,15 @@ the **TeleportMenu** addon, by **Justwait**. Thanks for this inventory.
 
 ---
 
+## License
+
+Polypode Teleports is free software, under the **GNU GPL version 3** ([`LICENSE`](LICENSE)
+file): you may take it, modify it and redistribute it, as long as you keep this license and
+credit the author. Copyright (C) 2026 Baktov.
+
+The lists taken from TeleportMenu (Justwait; see "Credits") remain under their MIT license: see
+[`LICENSE-TeleportMenu.txt`](LICENSE-TeleportMenu.txt).
+
 ## Version
 
 See the "Version" section of the [French README](README.md#version).
