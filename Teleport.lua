@@ -869,6 +869,10 @@ local function Build()
 	if P.SkinFrame then
 		P.SkinFrame(frame)
 	end
+	-- Tiroir, aimant ou fenêtre unique autour de la fenêtre Polypode (Polypode 2.28 / 2.29).
+	if P.RegisterModuleWindow then
+		P.RegisterModuleWindow(frame, "Polypode_Teleport")
+	end
 	if P.SkinPanel then
 		P.SkinPanel(listPanel)
 	end

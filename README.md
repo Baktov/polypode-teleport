@@ -69,6 +69,8 @@ propre** meilleur moyen. Il suffit donc de l'actionner dans toutes les fenêtres
 
 ---
 
+Avec Polypode 2.29 et suivants, la fenêtre suit l'option **Placement des fenêtres** de Polypode : en **tiroir** (défaut), elle s'ouvre accolée à la fenêtre Polypode et la suit ; **aimantée**, elle s'y accroche quand on la glisse contre un bord ; en **fenêtre unique**, elle s'ouvre à la place du module affiché, avec la colonne des modules sur le côté. Jamais déplacée en combat (boutons sécurisés).
+
 ## Fonctionnement
 
 - Le personnage joué est lu en direct (sorts connus, objets des sacs, jouets possédés, temps de
@@ -117,6 +119,7 @@ voir [`LICENSE-TeleportMenu.txt`](LICENSE-TeleportMenu.txt).
 
 ## Version
 
+`1.4.0` : avec Polypode 2.29, la fenêtre s'ouvre en **tiroir** contre la fenêtre Polypode, s'y aimante ou prend la place de la **fenêtre unique**, selon l'option « Placement des fenêtres » de Polypode. Jamais déplacée en combat (boutons sécurisés).
 `1.3.3` : licence libre **GNU GPL version 3** (fichier `LICENSE`) ; mention de la licence MIT de TeleportMenu pour les listes qui en viennent (`LICENSE-TeleportMenu.txt`).
 
 `1.3.2` : plus d'avertissement « Bindings.xml : Unrecognized XML: Binding » (fichier du raccourci retiré de la liste du `.toc` : le jeu le charge tout seul ; raccourci inchangé).

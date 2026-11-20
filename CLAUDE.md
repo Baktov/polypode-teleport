@@ -27,7 +27,7 @@ directement ce rôle.
 `P.WhisperOnline`, `P.IsSender`, `P.MAX_MESSAGE_LENGTH`, `P.GetTeamToken`, `P.GetCharKey`,
 `P.GetDisplayName`, `P.db.roster`, `P.SortedKeyItems`, `P.IsSoloMode`, `P.GetSelectedTeam`,
 `P.GetTeamMembers`, `P.GetTeamLeader`, `P.CreatePanel`, `P.CreateScrollList`, `P.SetListData`,
-`P.SkinFrame`, `P.SkinPanel`, `P.ShowTooltip`, `P.RefreshUI` (accroche), `P.ui`. Langues :
+`P.SkinFrame`, `P.RegisterModuleWindow` (si présente, Polypode 2.28 / 2.29 : tiroir, aimant ou fenêtre unique, clé `Polypode_Teleport` ; jamais déplacée ni fermée par Polypode en combat), `P.SkinPanel`, `P.ShowTooltip`, `P.RefreshUI` (accroche), `P.ui`. Langues :
 `P.NewLocale`, `P.AddTranslations`, `P.OnLanguageApplied`. Toute évolution de ces fonctions dans
 Polypode doit rester compatible, ou ce fichier doit suivre.
 

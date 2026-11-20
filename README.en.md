@@ -67,6 +67,8 @@ need to press it in all windows at the same time:
 
 ---
 
+With Polypode 2.29 and later, the window follows Polypode's **Window placement** option: as a **drawer** (default), it opens against the Polypode window and follows it; with the **magnet**, it sticks to it when dragged against an edge; as a **single window**, it opens in place of the module shown, with the column of modules on the side. Never moved in combat (secure buttons).
+
 ## How it works
 
 - The played character is read live (known spells, bag items, owned toys, cooldowns). The others
